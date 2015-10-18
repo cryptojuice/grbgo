@@ -2,21 +2,18 @@ package main
 
 import (
 	"fmt"
-	"github.com/codegangsta/cli"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/codegangsta/cli"
 )
 
-type branch struct {
-	Name string
-	Repo string
+type Head struct {
+	Branches []string
 }
 
-var heads []string
-
-func parseHeads(remote string) {
-	heads = nil
+func (h *Head) PopulateBranches(remote string) {
 	out, err := exec.Command("git", "ls-remote", "--heads", remote).Output()
 	if err != nil {
 		panic(err)
@@ -25,24 +22,45 @@ func parseHeads(remote string) {
 	raw := strings.Fields(string(out))
 	for _, field := range raw {
 		if strings.Contains(field, "refs/heads") {
-			heads = append(heads, field)
+			h.Branches = append(h.Branches, field)
 		}
 	}
+}
+
+func (h *Head) Filter(searchString string) []string {
+	fb := h.Branches[:0]
+	for _, b := range h.Branches {
+		if strings.Contains(b, searchString) {
+			fb = append(fb, b)
+		}
+	}
+	return fb
+}
+
+func Delete(prompt bool) {
 }
 
 func main() {
 	app := cli.NewApp()
 	app.Name = "grb"
-	app.Version = "0.0.1"
+	app.Version = "0.1.0"
 	app.Commands = []cli.Command{
 		{
 			Name:    "list",
 			Aliases: []string{"l"},
 			Usage:   "grb list",
 			Action: func(c *cli.Context) {
-				parseHeads("origin")
-				for _, h := range heads {
-					fmt.Println(h)
+				h := Head{}
+				h.PopulateBranches("origin")
+				if len(c.Args()) > 0 {
+					searchString := c.Args()[0]
+					for _, b := range h.Filter(searchString) {
+						fmt.Println(b)
+					}
+				} else {
+					for _, b := range h.Branches {
+						fmt.Println(b)
+					}
 				}
 			},
 		},
