@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	_ "github.com/codegangsta/cli"
+	"github.com/codegangsta/cli"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -15,6 +16,7 @@ type branch struct {
 var heads []string
 
 func parseHeads(remote string) {
+	heads = nil
 	out, err := exec.Command("git", "ls-remote", "--heads", remote).Output()
 	if err != nil {
 		panic(err)
@@ -23,24 +25,27 @@ func parseHeads(remote string) {
 	raw := strings.Fields(string(out))
 	for _, field := range raw {
 		if strings.Contains(field, "refs/heads") {
-			fmt.Println(field)
+			heads = append(heads, field)
 		}
 	}
 }
 
 func main() {
-	parseHeads("origin")
-	// app := cli.NewApp()
-	// app.Name = "Git Branch Manager"
-	// app.Version = "0.0.1"
-	// app.Commands = []cli.Command{
-	// 	{
-	// 		Name:    "list",
-	// 		Aliases: []string{"l"},
-	// 		Usage:   "grb list",
-	// 		Action: func(c *cli.Context) {
-	// 		},
-	// 	},
-	// }
-	// app.Run(os.Args)
+	app := cli.NewApp()
+	app.Name = "grb"
+	app.Version = "0.0.1"
+	app.Commands = []cli.Command{
+		{
+			Name:    "list",
+			Aliases: []string{"l"},
+			Usage:   "grb list",
+			Action: func(c *cli.Context) {
+				parseHeads("origin")
+				for _, h := range heads {
+					fmt.Println(h)
+				}
+			},
+		},
+	}
+	app.Run(os.Args)
 }
