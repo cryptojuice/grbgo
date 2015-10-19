@@ -69,7 +69,7 @@ func DeleteRemoteBranch(prompt bool, branch string) {
 func DeleteLocalBranch(prompt bool, branch string) {
 	_, err := exec.Command("git", "branch", "-D", branch).Output()
 	if err != nil {
-		log.Fatalf("Error '%v' may not exist locally.\n", branch)
+		log.Println("Error '%v' does not exist.\n", branch)
 	}
 }
 
@@ -77,16 +77,20 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "grb"
 	app.Version = "0.1.0"
+	app.Usage = "grb [global options] \"search terms\""
 
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
-			Name: "delete, d",
+			Name:  "delete, d",
+			Usage: "Deletes remote branches return by search result.",
 		},
 		cli.BoolFlag{
-			Name: "local, l",
+			Name:  "local, l",
+			Usage: "Used with -d or --delete to remove local branch along with remote branches.",
 		},
 		cli.StringFlag{
-			Name: "remote, r",
+			Name:  "remote, r",
+			Usage: "Alters git remote searched by grb. defaults to origin if flag is not provided.",
 		},
 	}
 
@@ -101,17 +105,16 @@ func main() {
 			remote.Name = c.String("remote")
 		}
 
-		if c.String("local") == "true" {
-			local := new(Local)
-			localBranches := local.Fetch()
-			for _, b := range Filter(localBranches, searchString) {
-				DeleteLocalBranch(false, b)
-			}
-		}
-
 		branches := remote.Fetch()
 
 		if c.String("delete") == "true" {
+			if c.String("local") == "true" {
+				local := new(Local)
+				localBranches := local.Fetch()
+				for _, b := range Filter(localBranches, searchString) {
+					DeleteLocalBranch(false, b)
+				}
+			}
 			if len(c.Args()) > 0 {
 				for _, b := range Filter(branches, searchString) {
 					DeleteRemoteBranch(false, b)
@@ -123,6 +126,10 @@ func main() {
 			for _, b := range branches {
 				fmt.Println(string(b[11:]))
 			}
+		}
+
+		if len(c.Args()) > 0 {
+			searchString = c.Args()[0]
 		}
 
 		if len(c.Args()) > 0 && c.String("local") == "false" && c.String("delete") == "false" {
