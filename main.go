@@ -107,18 +107,24 @@ func main() {
 
 		branches := remote.Fetch()
 
+		if len(c.Args()) > 0 {
+			searchString = c.Args()[0]
+		}
+
 		if c.String("delete") == "true" {
-			if c.String("local") == "true" {
-				local := new(Local)
-				localBranches := local.Fetch()
-				for _, b := range Filter(localBranches, searchString) {
-					DeleteLocalBranch(false, b)
-				}
-			}
-			if len(c.Args()) > 0 {
+			if len(c.Args()) > 0 && len(c.Args()[0]) > 0 {
 				for _, b := range Filter(branches, searchString) {
 					DeleteRemoteBranch(false, b)
 				}
+				if c.String("local") == "true" {
+					local := new(Local)
+					localBranches := local.Fetch()
+					for _, b := range Filter(localBranches, searchString) {
+						DeleteLocalBranch(false, b)
+					}
+				}
+			} else {
+				log.Println("Please provide search terms.")
 			}
 		}
 
@@ -126,10 +132,6 @@ func main() {
 			for _, b := range branches {
 				fmt.Println(string(b[11:]))
 			}
-		}
-
-		if len(c.Args()) > 0 {
-			searchString = c.Args()[0]
 		}
 
 		if len(c.Args()) > 0 && c.String("local") == "false" && c.String("delete") == "false" {
