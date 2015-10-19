@@ -44,6 +44,28 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "grb"
 	app.Version = "0.1.0"
+
+	app.Flags = []cli.Flag{
+		cli.BoolFlag{
+			Name: "delete, d",
+		},
+	}
+
+	app.Action = func(c *cli.Context) {
+		h := Head{}
+		h.PopulateBranches("origin")
+		if len(c.String("delete")) > 0 {
+			searchString := c.Args()[0]
+			for _, b := range h.Filter(searchString) {
+				_, err := exec.Command("git", "push", "origin", fmt.Sprintf(":%v", b)).Output()
+				if err != nil {
+					panic(err)
+				}
+				fmt.Println(b)
+			}
+		}
+	}
+
 	app.Commands = []cli.Command{
 		{
 			Name:    "list",
