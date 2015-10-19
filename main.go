@@ -9,12 +9,13 @@ import (
 	"github.com/codegangsta/cli"
 )
 
-type Head struct {
+type Remote struct {
+	Name     string
 	Branches []string
 }
 
-func (h *Head) PopulateBranches(remote string) {
-	out, err := exec.Command("git", "ls-remote", "--heads", remote).Output()
+func (r *Remote) Fetch() []string {
+	out, err := exec.Command("git", "ls-remote", "--heads", r.Name).Output()
 	if err != nil {
 		panic(err)
 	}
@@ -22,29 +23,31 @@ func (h *Head) PopulateBranches(remote string) {
 	raw := strings.Fields(string(out))
 	for _, field := range raw {
 		if strings.Contains(field, "refs/heads") {
-			h.Branches = append(h.Branches, field)
+			r.Branches = append(r.Branches, field)
 		}
 	}
+
+	return r.Branches
 }
 
-func (h *Head) Filter(searchString string) []string {
-	fb := h.Branches[:0]
-	for _, b := range h.Branches {
+func Filter(branches []string, searchString string) []string {
+	filtered := branches[:0]
+	for _, b := range branches {
 		if strings.Contains(b, searchString) {
-			fb = append(fb, b)
+			filtered = append(filtered, b)
 		}
 	}
-	return fb
+	return filtered
 }
 
-func Delete(prompt bool, branch string) {
+func DeleteRemoteBranch(prompt bool, branch string) {
 	_, err := exec.Command("git", "push", "origin", fmt.Sprintf(":%v", branch)).Output()
 	if err != nil {
 		panic(err)
 	}
 }
 
-func DeleteLocal(prompt bool, branch string) {
+func DeleteLocalBranch(prompt bool, branch string) {
 	_, err := exec.Command("git", "branch", "-D", branch).Output()
 	if err != nil {
 		panic(err)
@@ -67,20 +70,24 @@ func main() {
 
 	app.Action = func(c *cli.Context) {
 		var searchString string
-		h := Head{}
-		h.PopulateBranches("origin")
+		remote := Remote{
+			Name: "origin",
+		}
+		branches := remote.Fetch()
+
 		if len(c.Args()) > 0 {
 			searchString = c.Args()[0]
 		}
+
 		if c.String("local") == "true" {
-			for _, b := range h.Filter(searchString) {
-				DeleteLocal(false, b)
+			for _, b := range Filter(branches, searchString) {
+				DeleteLocalBranch(false, b)
 			}
 		}
 		if c.String("delete") == "true" {
 			if len(c.Args()) > 0 {
-				for _, b := range h.Filter(searchString) {
-					Delete(false, b)
+				for _, b := range Filter(branches, searchString) {
+					DeleteRemoteBranch(false, b)
 				}
 			}
 		}
@@ -92,15 +99,17 @@ func main() {
 			Aliases: []string{"l"},
 			Usage:   "grb list",
 			Action: func(c *cli.Context) {
-				h := Head{}
-				h.PopulateBranches("origin")
+				remote := Remote{
+					Name: "origin",
+				}
+				branches := remote.Fetch()
 				if len(c.Args()) > 0 {
 					searchString := c.Args()[0]
-					for _, b := range h.Filter(searchString) {
+					for _, b := range Filter(branches, searchString) {
 						fmt.Println(b)
 					}
 				} else {
-					for _, b := range h.Branches {
+					for _, b := range branches {
 						fmt.Println(b)
 					}
 				}
