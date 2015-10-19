@@ -5,13 +5,20 @@
 #### Usage Examples
 
 List all branches:
+```shell
 $ grb
-
+```
 Return branches with contents matching search term:
+```shell
 $ grb "my-branch"
+```
 
 Delete branches with contents matching search term:
+```shell
 $ grb -d "my-branch"
+```
 
 Delete delete both local and remote branches with contents matching search term:
+```shell
 $ grb -d -l "my-branch"
+```
