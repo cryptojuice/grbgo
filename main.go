@@ -127,7 +127,7 @@ func main() {
 		{
 			Name:    "list",
 			Aliases: []string{"l"},
-			Usage:   "grb list, grb list 'possible-branch-name', grb -r 'remoteName' list",
+			Usage:   "grb list, grb list 'possible-branch-name', grb -r 'remote-name' list",
 			Action: func(c *cli.Context) {
 				if len(c.GlobalString("remote")) > 0 {
 					remote.Name = c.GlobalString("remote")
