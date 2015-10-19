@@ -66,17 +66,25 @@ func main() {
 		cli.BoolFlag{
 			Name: "local, l",
 		},
+		cli.StringFlag{
+			Name: "remote, r",
+		},
+	}
+
+	remote := Remote{
+		Name: "origin",
 	}
 
 	app.Action = func(c *cli.Context) {
 		var searchString string
-		remote := Remote{
-			Name: "origin",
-		}
 		branches := remote.Fetch()
 
 		if len(c.Args()) > 0 {
 			searchString = c.Args()[0]
+		}
+
+		if len(c.String("remote")) > 0 {
+			remote.Name = c.String("remote")
 		}
 
 		if c.String("local") == "true" {
@@ -84,6 +92,7 @@ func main() {
 				DeleteLocalBranch(false, b)
 			}
 		}
+
 		if c.String("delete") == "true" {
 			if len(c.Args()) > 0 {
 				for _, b := range Filter(branches, searchString) {
@@ -99,9 +108,6 @@ func main() {
 			Aliases: []string{"l"},
 			Usage:   "grb list",
 			Action: func(c *cli.Context) {
-				remote := Remote{
-					Name: "origin",
-				}
 				branches := remote.Fetch()
 				if len(c.Args()) > 0 {
 					searchString := c.Args()[0]
