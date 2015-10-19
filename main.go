@@ -44,6 +44,13 @@ func Delete(prompt bool, branch string) {
 	}
 }
 
+func DeleteLocal(prompt bool, branch string) {
+	_, err := exec.Command("git", "branch", "-D", branch).Output()
+	if err != nil {
+		panic(err)
+	}
+}
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "grb"
@@ -53,15 +60,25 @@ func main() {
 		cli.BoolFlag{
 			Name: "delete, d",
 		},
+		cli.BoolFlag{
+			Name: "local, l",
+		},
 	}
 
 	app.Action = func(c *cli.Context) {
 		var searchString string
 		h := Head{}
 		h.PopulateBranches("origin")
+		if len(c.Args()) > 0 {
+			searchString = c.Args()[0]
+		}
+		if c.String("local") == "true" {
+			for _, b := range h.Filter(searchString) {
+				DeleteLocal(false, b)
+			}
+		}
 		if c.String("delete") == "true" {
 			if len(c.Args()) > 0 {
-				searchString = c.Args()[0]
 				for _, b := range h.Filter(searchString) {
 					Delete(false, b)
 				}
