@@ -8,7 +8,7 @@ List all branches:
 ```shell
 $ grb
 ```
-Return branches with contents matching search term:
+List branches with contents matching search term:
 ```shell
 $ grb "my-branch"
 ```
