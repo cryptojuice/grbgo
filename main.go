@@ -96,11 +96,6 @@ func main() {
 
 	app.Action = func(c *cli.Context) {
 		var searchString string
-		branches := remote.Fetch()
-
-		if len(c.Args()) > 0 {
-			searchString = c.Args()[0]
-		}
 
 		if len(c.String("remote")) > 0 {
 			remote.Name = c.String("remote")
@@ -114,6 +109,8 @@ func main() {
 			}
 		}
 
+		branches := remote.Fetch()
+
 		if c.String("delete") == "true" {
 			if len(c.Args()) > 0 {
 				for _, b := range Filter(branches, searchString) {
@@ -121,30 +118,21 @@ func main() {
 				}
 			}
 		}
+
+		if len(c.Args()) == 0 {
+			for _, b := range branches {
+				fmt.Println(string(b[11:]))
+			}
+		}
+
+		if len(c.Args()) > 0 && c.String("local") == "false" && c.String("delete") == "false" {
+			searchString = c.Args()[0]
+			for _, b := range Filter(branches, searchString) {
+				fmt.Println(string(b[11:]))
+			}
+		}
+
 	}
 
-	app.Commands = []cli.Command{
-		{
-			Name:    "list",
-			Aliases: []string{"l"},
-			Usage:   "grb list, grb list 'possible-branch-name', grb -r 'remote-name' list",
-			Action: func(c *cli.Context) {
-				if len(c.GlobalString("remote")) > 0 {
-					remote.Name = c.GlobalString("remote")
-				}
-				branches := remote.Fetch()
-				if len(c.Args()) > 0 {
-					searchString := c.Args()[0]
-					for _, b := range Filter(branches, searchString) {
-						fmt.Println(b)
-					}
-				} else {
-					for _, b := range branches {
-						fmt.Println(b)
-					}
-				}
-			},
-		},
-	}
 	app.Run(os.Args)
 }
