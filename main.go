@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -17,7 +18,7 @@ type Remote struct {
 func (r *Remote) Fetch() []string {
 	out, err := exec.Command("git", "ls-remote", "--heads", r.Name).Output()
 	if err != nil {
-		panic(err)
+		log.Fatalf("Error fetching from '%v' remote.\n", r.Name)
 	}
 
 	raw := strings.Fields(string(out))
@@ -43,14 +44,14 @@ func Filter(branches []string, searchString string) []string {
 func DeleteRemoteBranch(prompt bool, branch string) {
 	_, err := exec.Command("git", "push", "origin", fmt.Sprintf(":%v", branch)).Output()
 	if err != nil {
-		panic(err)
+		log.Fatalf("Error deleting branch %v.\n", branch)
 	}
 }
 
 func DeleteLocalBranch(prompt bool, branch string) {
 	_, err := exec.Command("git", "branch", "-D", branch).Output()
 	if err != nil {
-		panic(err)
+		log.Fatalf("Error deleting local branch %v.\n", branch)
 	}
 }
 
@@ -106,8 +107,11 @@ func main() {
 		{
 			Name:    "list",
 			Aliases: []string{"l"},
-			Usage:   "grb list",
+			Usage:   "grb list, grb list 'possible-branch-name', grb -r 'remoteName' list",
 			Action: func(c *cli.Context) {
+				if len(c.GlobalString("remote")) > 0 {
+					remote.Name = c.GlobalString("remote")
+				}
 				branches := remote.Fetch()
 				if len(c.Args()) > 0 {
 					searchString := c.Args()[0]
