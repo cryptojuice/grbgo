@@ -10,8 +10,16 @@ import (
 	"github.com/codegangsta/cli"
 )
 
+type Repository interface {
+	Fetch() []string
+}
+
 type Remote struct {
 	Name     string
+	Branches []string
+}
+
+type Local struct {
 	Branches []string
 }
 
@@ -29,6 +37,16 @@ func (r *Remote) Fetch() []string {
 	}
 
 	return r.Branches
+}
+
+func (l *Local) Fetch() []string {
+	out, err := exec.Command("git", "branch").Output()
+	if err != nil {
+		log.Fatalf("Error fetching local branches.\n")
+	}
+
+	l.Branches = strings.Fields(string(out))
+	return l.Branches
 }
 
 func Filter(branches []string, searchString string) []string {
@@ -51,7 +69,7 @@ func DeleteRemoteBranch(prompt bool, branch string) {
 func DeleteLocalBranch(prompt bool, branch string) {
 	_, err := exec.Command("git", "branch", "-D", branch).Output()
 	if err != nil {
-		log.Fatalf("Error deleting local branch %v.\n", branch)
+		log.Fatalf("Error '%v' may not exist locally.\n", branch)
 	}
 }
 
@@ -89,7 +107,9 @@ func main() {
 		}
 
 		if c.String("local") == "true" {
-			for _, b := range Filter(branches, searchString) {
+			local := new(Local)
+			localBranches := local.Fetch()
+			for _, b := range Filter(localBranches, searchString) {
 				DeleteLocalBranch(false, b)
 			}
 		}
