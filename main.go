@@ -37,7 +37,11 @@ func (h *Head) Filter(searchString string) []string {
 	return fb
 }
 
-func Delete(prompt bool) {
+func Delete(prompt bool, branch string) {
+	_, err := exec.Command("git", "push", "origin", fmt.Sprintf(":%v", branch)).Output()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {
@@ -52,16 +56,15 @@ func main() {
 	}
 
 	app.Action = func(c *cli.Context) {
+		var searchString string
 		h := Head{}
 		h.PopulateBranches("origin")
-		if len(c.String("delete")) > 0 {
-			searchString := c.Args()[0]
-			for _, b := range h.Filter(searchString) {
-				_, err := exec.Command("git", "push", "origin", fmt.Sprintf(":%v", b)).Output()
-				if err != nil {
-					panic(err)
+		if c.String("delete") == "true" {
+			if len(c.Args()) > 0 {
+				searchString = c.Args()[0]
+				for _, b := range h.Filter(searchString) {
+					Delete(false, b)
 				}
-				fmt.Println(b)
 			}
 		}
 	}
