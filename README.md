@@ -3,7 +3,7 @@
 `grb` is a simple command line utility for displaying and deleting multiple local/remote branches. 
 
 #### Installation
-If you already have go toolset available
+If you already have go available
 ```shell
 $ go get github.com/cryptojuice/grbgo
 ```
