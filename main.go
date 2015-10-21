@@ -8,46 +8,8 @@ import (
 	"strings"
 
 	"github.com/codegangsta/cli"
+	"github.com/cryptojuice/grb/repositories"
 )
-
-type Repository interface {
-	Fetch() []string
-}
-
-type Remote struct {
-	Name     string
-	Branches []string
-}
-
-type Local struct {
-	Branches []string
-}
-
-func (r *Remote) Fetch() []string {
-	out, err := exec.Command("git", "ls-remote", "--heads", r.Name).Output()
-	if err != nil {
-		log.Fatalf("Error fetching from '%v' remote.\n", r.Name)
-	}
-
-	raw := strings.Fields(string(out))
-	for _, field := range raw {
-		if strings.Contains(field, "refs/heads") {
-			r.Branches = append(r.Branches, field)
-		}
-	}
-
-	return r.Branches
-}
-
-func (l *Local) Fetch() []string {
-	out, err := exec.Command("git", "branch").Output()
-	if err != nil {
-		log.Fatalf("Error fetching local branches.\n")
-	}
-
-	l.Branches = strings.Fields(string(out))
-	return l.Branches
-}
 
 func Filter(branches []string, searchString string) []string {
 	filtered := branches[:0]
@@ -126,40 +88,52 @@ func main() {
 		},
 	}
 
-	remote := Remote{
-		Name: "origin",
-	}
-
 	app.Action = func(c *cli.Context) {
-		var searchString string
 		var promptFlag = true
+		var deleteRemoteFlag = false
+		var deleteLocalFlag = false
+		var searchString string
+
+		var remoteRepository = repositories.Remote{
+			Name: "origin",
+		}
+		var localRepository = repositories.Local{}
 
 		if c.String("no-prompt") == "true" {
 			promptFlag = false
 		}
 
 		if len(c.String("remote")) > 0 {
-			remote.Name = c.String("remote")
+			remoteRepository.Name = c.String("remote")
 		}
 
-		branches := remote.Fetch()
+		if c.String("delete") == "true" {
+			deleteRemoteFlag = true
+		}
+
+		if c.String("local") == "true" {
+			deleteLocalFlag = true
+		}
+
+		branches := remoteRepository.Fetch()
+		localBranches := localRepository.Fetch()
 
 		if len(c.Args()) > 0 {
 			searchString = c.Args()[0]
 		}
 
-		if c.String("delete") == "true" {
+		if deleteRemoteFlag == true {
 			if len(c.Args()) > 0 && len(c.Args()[0]) > 0 {
 				for _, b := range Filter(branches, searchString) {
 					DeleteRemoteBranch(b, promptFlag)
 				}
-				if c.String("local") == "true" {
-					local := new(Local)
-					localBranches := local.Fetch()
+
+				if deleteLocalFlag == true {
 					for _, b := range Filter(localBranches, searchString) {
 						DeleteLocalBranch(b, promptFlag)
 					}
 				}
+
 			} else {
 				log.Println("Please provide search terms.")
 			}
@@ -171,13 +145,12 @@ func main() {
 			}
 		}
 
-		if len(c.Args()) > 0 && c.String("local") == "false" && c.String("delete") == "false" {
+		if len(c.Args()) > 0 && deleteLocalFlag == false && deleteRemoteFlag == false {
 			searchString = c.Args()[0]
 			for _, b := range Filter(branches, searchString) {
 				fmt.Println(string(b[11:]))
 			}
 		}
-
 	}
 
 	app.Run(os.Args)
