@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"fmt"
 	"log"
 	"os/exec"
 	"strings"
@@ -25,4 +26,25 @@ func (r *Remote) Fetch() []string {
 	}
 
 	return r.Branches
+}
+
+func (r *Remote) DeleteBranch(branch string, promptForDeletion bool) {
+	var err error
+
+	if promptForDeletion == true {
+		var input string
+		fmt.Printf("remove branch %v [y/N]: ", branch)
+		fmt.Scanln(&input)
+
+		if input == "y" || input == "Y" {
+			_, err = exec.Command("git", "push", "origin", fmt.Sprintf(":%v", branch)).Output()
+		}
+
+	} else {
+		_, err = exec.Command("git", "push", "origin", fmt.Sprintf(":%v", branch)).Output()
+	}
+
+	if err != nil {
+		log.Fatalf("Error deleting branch %v.\n", branch)
+	}
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"strings"
 
 	"github.com/cryptojuice/grb/Godeps/_workspace/src/github.com/codegangsta/cli"
@@ -19,48 +18,6 @@ func Filter(branches []string, searchString string) []string {
 		}
 	}
 	return filtered
-}
-
-func DeleteRemoteBranch(branch string, prompt bool) {
-	var err error
-
-	if prompt == true {
-		var input string
-		fmt.Printf("remove branch %v [y/N]: ", branch)
-		fmt.Scanln(&input)
-
-		if input == "y" || input == "Y" {
-			_, err = exec.Command("git", "push", "origin", fmt.Sprintf(":%v", branch)).Output()
-		}
-
-	} else {
-		_, err = exec.Command("git", "push", "origin", fmt.Sprintf(":%v", branch)).Output()
-	}
-
-	if err != nil {
-		log.Fatalf("Error deleting branch %v.\n", branch)
-	}
-}
-
-func DeleteLocalBranch(branch string, prompt bool) {
-	var err error
-
-	if prompt == true {
-		var input string
-		fmt.Printf("remove local branch %v [y/N]: ", branch)
-		fmt.Scanln(&input)
-
-		if input == "y" || input == "Y" {
-			_, err = exec.Command("git", "branch", "-D", branch).Output()
-		}
-
-	} else {
-		_, err = exec.Command("git", "branch", "-D", branch).Output()
-	}
-
-	if err != nil {
-		log.Println("Error '%v' does not exist.\n", branch)
-	}
 }
 
 func main() {
@@ -125,12 +82,12 @@ func main() {
 		if deleteRemoteFlag == true {
 			if len(c.Args()) > 0 && len(c.Args()[0]) > 0 {
 				for _, b := range Filter(branches, searchString) {
-					DeleteRemoteBranch(b, promptFlag)
+					remoteRepository.DeleteBranch(b, promptFlag)
 				}
 
 				if deleteLocalFlag == true {
 					for _, b := range Filter(localBranches, searchString) {
-						DeleteLocalBranch(b, promptFlag)
+						localRepository.DeleteBranch(b, promptFlag)
 					}
 				}
 
