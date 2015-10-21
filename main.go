@@ -59,15 +59,43 @@ func Filter(branches []string, searchString string) []string {
 	return filtered
 }
 
-func DeleteRemoteBranch(prompt bool, branch string) {
-	_, err := exec.Command("git", "push", "origin", fmt.Sprintf(":%v", branch)).Output()
+func DeleteRemoteBranch(branch string, prompt bool) {
+	var err error
+
+	if prompt == true {
+		var input string
+		fmt.Printf("remove branch %v [y/N]: ", branch)
+		fmt.Scanln(&input)
+
+		if input == "y" || input == "Y" {
+			_, err = exec.Command("git", "push", "origin", fmt.Sprintf(":%v", branch)).Output()
+		}
+
+	} else {
+		_, err = exec.Command("git", "push", "origin", fmt.Sprintf(":%v", branch)).Output()
+	}
+
 	if err != nil {
 		log.Fatalf("Error deleting branch %v.\n", branch)
 	}
 }
 
-func DeleteLocalBranch(prompt bool, branch string) {
-	_, err := exec.Command("git", "branch", "-D", branch).Output()
+func DeleteLocalBranch(branch string, prompt bool) {
+	var err error
+
+	if prompt == true {
+		var input string
+		fmt.Printf("remove local branch %v [y/N]: ", branch)
+		fmt.Scanln(&input)
+
+		if input == "y" || input == "Y" {
+			_, err = exec.Command("git", "branch", "-D", branch).Output()
+		}
+
+	} else {
+		_, err = exec.Command("git", "branch", "-D", branch).Output()
+	}
+
 	if err != nil {
 		log.Println("Error '%v' does not exist.\n", branch)
 	}
@@ -76,7 +104,7 @@ func DeleteLocalBranch(prompt bool, branch string) {
 func main() {
 	app := cli.NewApp()
 	app.Name = "grb"
-	app.Version = "0.1.0"
+	app.Version = "0.1.2"
 	app.Usage = "grb [global options] \"search terms\""
 
 	app.Flags = []cli.Flag{
@@ -87,6 +115,10 @@ func main() {
 		cli.BoolFlag{
 			Name:  "local, l",
 			Usage: "Used with -d or --delete to remove local branch along with remote branches.",
+		},
+		cli.BoolFlag{
+			Name:  "no-prompt, f",
+			Usage: "Attempt to delete without confirmation.",
 		},
 		cli.StringFlag{
 			Name:  "remote, r",
@@ -100,6 +132,12 @@ func main() {
 
 	app.Action = func(c *cli.Context) {
 		var searchString string
+		var promptFlag = true
+
+		if c.String("no-prompt") == "true" {
+			promptFlag = false
+			fmt.Println(promptFlag)
+		}
 
 		if len(c.String("remote")) > 0 {
 			remote.Name = c.String("remote")
@@ -114,13 +152,13 @@ func main() {
 		if c.String("delete") == "true" {
 			if len(c.Args()) > 0 && len(c.Args()[0]) > 0 {
 				for _, b := range Filter(branches, searchString) {
-					DeleteRemoteBranch(false, b)
+					DeleteRemoteBranch(b, promptFlag)
 				}
 				if c.String("local") == "true" {
 					local := new(Local)
 					localBranches := local.Fetch()
 					for _, b := range Filter(localBranches, searchString) {
-						DeleteLocalBranch(false, b)
+						DeleteLocalBranch(b, promptFlag)
 					}
 				}
 			} else {
