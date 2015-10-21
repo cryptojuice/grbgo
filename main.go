@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/codegangsta/cli"
+	"github.com/cryptojuice/grb/Godeps/_workspace/src/github.com/codegangsta/cli"
 	"github.com/cryptojuice/grb/repositories"
 )
 
