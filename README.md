@@ -22,3 +22,8 @@ Delete delete both local and remote branches with contents matching search term:
 ```shell
 $ grb -d -l "my-branch"
 ```
+
+Usage/Help
+```shell
+$ grb help
+```
