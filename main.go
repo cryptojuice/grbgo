@@ -136,7 +136,6 @@ func main() {
 
 		if c.String("no-prompt") == "true" {
 			promptFlag = false
-			fmt.Println(promptFlag)
 		}
 
 		if len(c.String("remote")) > 0 {
