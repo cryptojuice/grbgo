@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/codegangsta/cli"
 	"github.com/cryptojuice/grb/repositories"
+	"github.com/urfave/cli"
 )
 
 func Filter(branches []string, searchString string) []string {
